@@ -9,19 +9,19 @@ public class Pais extends Thread {
 	
 	public static final int TYPE_EUROPE = 1;
 	public static final int TYPE_ASIA = 2;
+	
 	private JPanel view, vistaInfo;
 	private JLabel lblPeticiones, lblTonsRegular, lblTonsBuena, lblTonsExcelente, lblTotalTons;
 	
 	private static Semaforo semaphore;
-	private int noPais, type, peticiones, totalToneladas;
+	private int noPais, type, peticiones;
 	private Vector<Vector<Tonelada>> tons;
 	private static int tonsEuropa, tonsAsia, tonsAvaiablePerContinent;
-	private Vector<Tonelada> toneladasMina;
+	private Vector<Tonelada>[] toneladasMina;
 	
-	public Pais(int noPais, int type, int tonsAvaiablePerContinent, Vector<Tonelada> toneladas) {
+	public Pais(int noPais, int type, int tonsAvaiablePerContinent, Vector<Tonelada>[] toneladas) {
 		semaphore = new Semaforo(1);
 		peticiones = 0;
-		totalToneladas = 0;
 		
 		this.noPais = noPais;
 		this.type = type;
@@ -43,25 +43,25 @@ public class Pais extends Thread {
 	}
 	
 	public void run() {
-		int tipoPeticion, cantidad;
+		int petitionType, cantidad;
 		Tonelada currentTon;
 		
 		while(continuar()) {
-			tipoPeticion = Rutinas.nextInt(1,3);
+			petitionType = Rutinas.nextInt(1,3);
 			cantidad = Rutinas.nextInt(1,2);
 			
-			for (int i = 0; i < toneladasMina.size(); i++) {
-				currentTon = toneladasMina.elementAt(i);
+			for (int i = 0; i < toneladasMina[petitionType-1].size(); i++) {
+				currentTon = toneladasMina[petitionType-1].elementAt(i);
 				//Verificar si puede tomar la tonelada
-				if(currentTon.getType() == tipoPeticion) {
-					currentTon.getSemaphore().Espera();
+				if(currentTon.getType() == petitionType) {
+					Mina.getSemaphore(petitionType).Espera();
 					if(currentTon.isTaken) {
-						currentTon.getSemaphore().Libera();
+						Mina.getSemaphore(petitionType).Libera();
 						continue;
 					}
 					currentTon.isTaken = true;
-					currentTon.getSemaphore().Libera();
-					tons.elementAt(tipoPeticion-1).add(currentTon);
+					Mina.getSemaphore(petitionType).Libera();
+					tons.elementAt(petitionType-1).add(currentTon);
 					cantidad--;
 					addTons();
 				}
@@ -80,7 +80,6 @@ public class Pais extends Thread {
 	}
 	
 	public void addTons() {
-		totalToneladas++;
 		Mina.addTotalTons(type);
 		if(type == this.TYPE_EUROPE) {
 			semaphore.Espera();
@@ -133,9 +132,5 @@ public class Pais extends Thread {
 	
 	public JPanel getView() {
 		return view;
-	}
-	
-	public int getTotalToneladas() {
-		return totalToneladas;
 	}
 }

@@ -9,12 +9,14 @@ import utils.*;
 
 public class Mina extends JFrame implements ActionListener {
 	private Vector <Pais> continenteEuropeo, continenteAsiatico;
-	private Vector<Tonelada> minaToneladas;
-	private int noPaisesEuropeos, noPaisesAsiaticos, totalToneladas, tonsEuropa, tonsAsia, tonsRegular, tonsBuena, tonsExcelente;
+	private Vector<Tonelada> toneladas [];			//LALALALALALA
+	private int totalToneladas;
 	private static int [] tonsPerContinent = new int[2];
+	private static Semaforo semaphores[];
+	
 	private JPanel [] viewPaisesEuropeos, viewPaisesAsiaticos;
-	private JPanel panelPrincipal, viewEuropa, panelEuropa, viewAsia, panelAsia;
-	private static JLabel lblTonsEuropa, lblTonsAsia;
+	private JPanel panelPrincipal, viewEurope, panelEurope, viewAsia, panelAsia;
+	private static JLabel lblTonsEurope, lblTonsAsia;
 	private JButton btnIniciar;
 	
 	public Mina() {
@@ -24,52 +26,71 @@ public class Mina extends JFrame implements ActionListener {
 	}
 	
 	public void initialize() {
+		//Variables declaration
+		int noPaisesEuropeos, noPaisesAsiaticos, tonsEurope, tonsAsia, tonsRegular, tonsBuena, tonsExcelente;
+		
 		//Inicializar países
 		continenteEuropeo = new Vector<Pais>();
 		continenteAsiatico = new Vector<Pais>();
-		minaToneladas = new Vector<Tonelada>();
+		toneladas = new Vector[3];
+		for (int i = 0; i < toneladas.length; i++)
+			toneladas[i] = new Vector<Tonelada>();
+		
 		noPaisesEuropeos = Rutinas.nextInt(10,30);
 		noPaisesAsiaticos = Rutinas.nextInt(5,7);
+		
+		//Semaphores
+		semaphores = new Semaforo[3];
+		for (int i = 0; i < semaphores.length; i++)
+			semaphores[i] = new Semaforo(1);
+		
+		//View
 		viewPaisesEuropeos = new JPanel [noPaisesEuropeos];
 		viewPaisesAsiaticos = new JPanel [noPaisesAsiaticos];
 		panelPrincipal = new JPanel();
-		panelEuropa = new JPanel();
+		panelEurope = new JPanel();
 		panelAsia = new JPanel();
-		lblTonsEuropa = new JLabel("0");
+		lblTonsEurope = new JLabel("0");
 		lblTonsAsia = new JLabel("0");
+		
 		//Inicializar toneladas
 		totalToneladas = Rutinas.nextInt(100, 200);
 		if(totalToneladas%2!=0)
 			totalToneladas++;
-		tonsEuropa = tonsAsia = (int)(totalToneladas/2);
+		tonsEurope = tonsAsia = (int)(totalToneladas/2);
 		//Repartir toneladas por tipos
 		tonsRegular = (int) (totalToneladas *  0.30);
 		tonsBuena = (int) (totalToneladas *  0.60);
 		tonsExcelente = totalToneladas - (tonsRegular + tonsBuena);
 		
 		//Llenar vectores
+		for (int i = 0; i < tonsRegular; i++) 
+			toneladas[Tonelada.TYPE_REGULAR-1].addElement(new Tonelada(Tonelada.TYPE_REGULAR));
+		for (int i = 0; i < tonsBuena; i++) 
+			toneladas[Tonelada.TYPE_BUENA-1].addElement(new Tonelada(Tonelada.TYPE_BUENA));
+		for (int i = 0; i < tonsExcelente; i++) 
+			toneladas[Tonelada.TYPE_EXCELENTE-1].addElement(new Tonelada(Tonelada.TYPE_EXCELENTE));
+		
 		for (int i = 0; i < noPaisesEuropeos; i++) {
-			continenteEuropeo.addElement(new Pais(i+1, Pais.TYPE_EUROPE, tonsEuropa, minaToneladas));
+			continenteEuropeo.addElement(new Pais(i+1, Pais.TYPE_EUROPE, tonsEurope, toneladas));
 			viewPaisesEuropeos[i] = continenteEuropeo.elementAt(i).getView();
-			panelEuropa.add(viewPaisesEuropeos[i]);
+			panelEurope.add(viewPaisesEuropeos[i]);
 		}
 		for (int i = 0; i < noPaisesAsiaticos; i++) {
-			continenteAsiatico.addElement(new Pais(i+1, Pais.TYPE_ASIA, tonsAsia, minaToneladas));
+			continenteAsiatico.addElement(new Pais(i+1, Pais.TYPE_ASIA, tonsAsia, toneladas));
 			viewPaisesAsiaticos[i] = continenteAsiatico.elementAt(i).getView();
 			panelAsia.add(viewPaisesAsiaticos[i]);
 		}
-		for (int i = 0; i < tonsRegular; i++) 
-			minaToneladas.addElement(new Tonelada(Tonelada.TYPE_REGULAR));
-		for (int i = 0; i < tonsBuena; i++) 
-			minaToneladas.addElement(new Tonelada(Tonelada.TYPE_BUENA));
-		for (int i = 0; i < tonsExcelente; i++) 
-			minaToneladas.addElement(new Tonelada(Tonelada.TYPE_EXCELENTE));
 	}
 	
 	public static void addTotalTons(int type) {
 		tonsPerContinent[type-1]++;
-		lblTonsEuropa.setText(tonsPerContinent[0]+"");
+		lblTonsEurope.setText(tonsPerContinent[0]+"");
 		lblTonsAsia.setText(tonsPerContinent[1]+"");
+	}
+	
+	public static Semaforo getSemaphore(int type) {
+		return semaphores[type-1];
 	}
 	
 	public void createInterface() {
@@ -98,20 +119,20 @@ public class Mina extends JFrame implements ActionListener {
 		JPanel panelBtn = new JPanel();
 		panelBtn.add(btnIniciar);
 		
-		//VISTA DE EUROPA
-		viewEuropa = new JPanel();
-		viewEuropa.setLayout(new BorderLayout());
-		viewEuropa.setPreferredSize(new Dimension(1200,900));
-		JLabel labelEuropa = new JLabel("CONTINENTE EUROPEO");
-		labelEuropa.setFont(new Font("Times new Roman", Font.BOLD, 20));
-		labelEuropa.setIcon(Rutinas.AjustarImagen("Europa.png", 100, 100));
+		//VISTA DE Europe
+		viewEurope = new JPanel();
+		viewEurope.setLayout(new BorderLayout());
+		viewEurope.setPreferredSize(new Dimension(1200,900));
+		JLabel labelEurope = new JLabel("CONTINENTE EUROPEO");
+		labelEurope.setFont(new Font("Times new Roman", Font.BOLD, 20));
+		labelEurope.setIcon(Rutinas.AjustarImagen("Europe.png", 100, 100));
 		JPanel panelTonsEurope = new JPanel();
 		panelTonsEurope.add(new JLabel("Total de toneladas por continente: "));
-		panelTonsEurope.add(lblTonsEuropa);
-		viewEuropa.add(labelEuropa, BorderLayout.NORTH);
-		viewEuropa.add(panelEuropa, BorderLayout.CENTER);
-		viewEuropa.add(panelTonsEurope, BorderLayout.SOUTH);
-		panelPrincipal.add(viewEuropa);
+		panelTonsEurope.add(lblTonsEurope);
+		viewEurope.add(labelEurope, BorderLayout.NORTH);
+		viewEurope.add(panelEurope, BorderLayout.CENTER);
+		viewEurope.add(panelTonsEurope, BorderLayout.SOUTH);
+		panelPrincipal.add(viewEurope);
 		
 		//VISTA DE ASIA
 		viewAsia = new JPanel();
@@ -142,5 +163,21 @@ public class Mina extends JFrame implements ActionListener {
 			continenteEuropeo.elementAt(i).start();
 		for (int i = 0; i < continenteAsiatico.size(); i++)
 			continenteAsiatico.elementAt(i).start();
+//		verify();
+//		JOptionPane.showMessageDialog(this, "Se han acabado las toneladas.");
 	}
+//	
+//	private boolean isAlive() {
+//		for (int i = 0; i < continenteEuropeo.size(); i++) 
+//			if(continenteEuropeo.elementAt(i).isAlive())
+//				return true;
+//		for (int i = 0; i < continenteAsiatico.size(); i++) 
+//			if(continenteAsiatico.elementAt(i).isAlive())
+//				return true;
+//		return false;
+//	}
+//	
+//	private void verify() {
+//		while(isAlive());
+//	}
 }
